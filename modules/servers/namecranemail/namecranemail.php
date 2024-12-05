@@ -108,7 +108,6 @@ function namecranemail_ConfigOptions() {
 }
 
 function namecranemail_CreateAccount($vars) {
-
   $post = [
     'domain'                  => $vars['domain'],
     'disklimit'               => (isset($vars['configoptions']['disklimit']) ? $vars['configoptions']['disklimit'] : $vars['configoption1']),
@@ -340,13 +339,14 @@ function namecranemail_execute($method, $action, $vars, $post = []) {
       return ['status' => false, 'message' => 'Invalid JSON response from Namecrane. Ticket support (and blame Fran)' ];
     }
 
+    logModuleCall('namecranemail', $action, $post, $return);
     return [ 'status' => $return['status'], 'message' => $return['message'], 'data' => $return ];
 
   } catch (\GuzzleHttp\Exception\RequestException $e) {    
-    // TODO - add logModule calls here
+    logModuleCall('namecranemail', $action, $post, $e);
     return [ 'status' => false, 'message' => $e->getMessage() ];
   } catch(\GuzzleHttp\Exception\GuzzleException $e) {
-    // TODO - add logModule calls here
+    logModuleCall('namecranemail', $action, $post, $e);
     return [ 'status' => false, 'message' => $e->getMessage() ];
   }
 
