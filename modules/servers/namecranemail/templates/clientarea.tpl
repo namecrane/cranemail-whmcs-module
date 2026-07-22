@@ -8,7 +8,7 @@
 <div class="row">
   <div class="col-12 text-right">
       {if $info['spamexperts']}
-      <a href="clientarea.php?action=productdetails&id={$serviceid}&modop=custom&a=ssoSpamExperts" class="btn btn-success" target="_blank">Login to SpamExperts</a>
+      <a href="clientarea.php?action=productdetails&id={$serviceid}&modop=custom&a=ssoMXFilter" class="btn btn-success" target="_blank">Login to MXFilter</a>
       {/if}
       <a href="https://workspace.org" class="btn btn-primary" target="_blank">Open Login Page</a>
   </div>
@@ -69,7 +69,7 @@
           </thead>
           <tbody>
             <tr>
-              <td class="fieldarea">SpamExperts Anti Spam</td>
+              <td class="fieldarea">MXFilter Anti Spam</td>
               <td><strong>{if $info['spamexperts']}Enabled{else}Disabled{/if}</strong></td>
             </tr>
             <tr>
