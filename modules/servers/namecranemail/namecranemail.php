@@ -269,7 +269,7 @@ function namecranemail_ClientAreaCustomButtonArray(array $vars) {
   $return = [];
 
   if($vars['configoptions']['spamexperts'] || $vars['configoption3']) {
-    $return['Login to SpamExperts'] = 'ssoSpamExperts';
+    $return['Login to MXFilter'] = 'ssoMXFilter';
   }
 
   return $return;
@@ -281,26 +281,26 @@ function namecranemail_AdminCustomButtonArray(array $vars) {
   $return = [];
 
   if($vars['configoptions']['spamexperts'] || $vars['configoption3']) {
-    $return['Login to SpamExperts'] = 'adminSpamExpertsSSO';
+    $return['Login to MXFilter'] = 'adminMXFilterSSO';
   }
 
   return $return;
 
 }
 
-function namecranemail_getSpamExpertsSSO(array $vars) {
+function namecranemail_getMXFilterSSO(array $vars) {
 
   $post = [
     'domain' => $vars['domain']
   ];
 
-  return namecranemail_execute('POST', 'spamexperts/login', $vars, $post);
+  return namecranemail_execute('POST', 'mxfilter/login', $vars, $post);
 
 }
 
-function namecranemail_adminSpamExpertsSSO(array $vars) {
+function namecranemail_adminMXFilterSSO(array $vars) {
 
-  $sso = namecranemail_getSpamExpertsSSO($vars);
+  $sso = namecranemail_getMXFilterSSO($vars);
 
   if(!$sso['status']) {
     return 'Couldn\'t get authentication token.';
@@ -310,9 +310,9 @@ function namecranemail_adminSpamExpertsSSO(array $vars) {
 
 }
 
-function namecranemail_ssoSpamExperts(array $vars) {
+function namecranemail_ssoMXFilter(array $vars) {
 
-  $sso = namecranemail_getSpamExpertsSSO($vars);
+  $sso = namecranemail_getMXFilterSSO($vars);
 
   if(!$sso['status']) {
     return 'Couldn\'t get authentication token.';
