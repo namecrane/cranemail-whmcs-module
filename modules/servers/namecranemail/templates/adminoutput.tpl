@@ -28,7 +28,7 @@
             <td align="left"><strong>{if $info['office']}Enabled{else}Disabled{/if}</strong></td>
         </tr>
         <tr>
-            <td class="fieldarea">Spamexperts Status:</td>
+            <td class="fieldarea">MXFilter Status:</td>
             <td align="left"><strong>{if $info['spamexperts']}Enabled{else}Disabled{/if}</strong></td>
         </tr>
         <tr>
