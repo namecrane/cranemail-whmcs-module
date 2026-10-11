@@ -33,16 +33,28 @@ $limit = function ($used, $limit, $unit = '') {
             <tr><td>File storage / Office</td><td><?= $domain['file_storage'] ? 'On' : 'Off' ?> / <?= $domain['office'] ? 'On' : 'Off' ?></td></tr>
             <tr><td>Archiving</td><td><?= $domain['archive_years'] ? $e($domain['archive_years'] . ' years, ' . $domain['archive_direction']) : 'Off' ?></td></tr>
             <tr><td>Password-free sign-in</td><td>Webmail <?= $domain['webmail_sso'] ? 'allowed' : 'off' ?>, MXFilter <?= $domain['mxfilter_sso'] ? 'allowed' : 'off' ?></td></tr>
-            <?php if (! $domain['verified']) { ?>
-                <tr><td>Verification TXT</td><td><code><?= $e($domain['verification']['host']) ?></code> = <code><?= $e($domain['verification']['value']) ?></code></td></tr>
-            <?php } ?>
         </table>
     </div>
 </div>
-<details>
-    <summary style="cursor:pointer">DNS records the domain needs</summary>
+<style>
+    .ncm-dns > summary { display: inline-block; list-style: none; cursor: pointer; }
+    .ncm-dns > summary::-webkit-details-marker { display: none; }
+    .ncm-dns > summary .ncm-caret { display: inline-block; margin-right: 4px; transition: transform 0.15s; }
+    .ncm-dns[open] > summary .ncm-caret { transform: rotate(90deg); }
+    .ncm-dns .ncm-verify td { background: #fcf8e3; }
+</style>
+<?php /* Open while the domain waits for its verification record, the one thing to do then. */ ?>
+<details class="ncm-dns"<?= $domain['verified'] ? '' : ' open' ?>>
+    <summary class="btn btn-default btn-sm"><span class="ncm-caret">&#9656;</span> DNS Records</summary>
     <table class="table table-condensed" style="margin:8px 0 0">
         <tr><th>Type</th><th>Name</th><th>Value</th></tr>
+        <?php if (! $domain['verified']) { ?>
+            <tr class="ncm-verify">
+                <td>TXT</td>
+                <td><code><?= $e($domain['verification']['host']) ?></code></td>
+                <td><code><?= $e($domain['verification']['value']) ?></code><div class="text-muted small">Verifies the domain. Its mailboxes are set up a few minutes after this record shows up.</div></td>
+            </tr>
+        <?php } ?>
         <?php foreach ($domain['dns_records'] as $record) { ?>
             <tr><td><?= $e($record['type']) ?></td><td><code><?= $e($record['name']) ?></code></td><td><code style="word-break:break-all"><?= $e($record['content']) ?></code></td></tr>
         <?php } ?>
