@@ -6,14 +6,17 @@
     {assign var="ncmCardTitle" value="card-title" scope="parent"}
     {assign var="ncmCardBody" value="card-body" scope="parent"}
     {assign var="ncmBadge" value="badge badge-" scope="parent"}
+    {assign var="ncmInputButtons" value="input-group-append" scope="parent"}
 {else}
     {assign var="ncmCard" value="panel panel-default ncm-card" scope="parent"}
     {assign var="ncmCardHead" value="panel-heading" scope="parent"}
     {assign var="ncmCardTitle" value="panel-title" scope="parent"}
     {assign var="ncmCardBody" value="panel-body" scope="parent"}
     {assign var="ncmBadge" value="label label-" scope="parent"}
+    {assign var="ncmInputButtons" value="input-group-btn" scope="parent"}
 {/if}
 <link rel="stylesheet" href="{$WEB_ROOT}/modules/servers/namecranemail/assets/css/namecranemail.css?v={$ncmVersion}">
+<script src="{$WEB_ROOT}/modules/servers/namecranemail/assets/js/namecranemail.js?v={$ncmVersion}" defer></script>
 
 {if $ncmManage}
     <ul class="nav nav-tabs ncm-tabs">

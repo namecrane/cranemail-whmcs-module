@@ -135,7 +135,7 @@ class ClientArea
             'ncmForm' => array(
                 'name' => $editing ? $editing['username'] : ($posted ? self::input('name') : ''),
                 'display_name' => $posted ? self::input('display_name') : ($editing ? $editing['display_name'] : ''),
-                'password' => $editing ? '' : ($posted ? self::input('password') : self::password()),
+                'password' => $posted && ! $editing ? self::input('password') : '',
                 'disk_limit' => $posted ? (int) self::input('disk_limit') : ($editing ? (int) $editing['disk_limit'] : 0),
                 'admin' => $posted ? self::checked('admin') : ($editing ? (bool) $editing['admin'] : false),
                 'enabled' => $posted ? self::checked('enabled') : ($editing ? (bool) $editing['enabled'] : true),
@@ -445,22 +445,5 @@ class ClientArea
     private static function addresses($text)
     {
         return array_values(array_filter(array_map('trim', preg_split('/[\s,;]+/', $text))));
-    }
-
-    /**
-     * A password to suggest for a new mailbox.
-     *
-     * @return string
-     */
-    private static function password()
-    {
-        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-        $password = '';
-
-        for ($i = 0; $i < 16; $i++) {
-            $password .= $alphabet[random_int(0, strlen($alphabet) - 1)];
-        }
-
-        return $password . '!' . random_int(10, 99);
     }
 }
