@@ -86,7 +86,7 @@
                                         {if !$ncmUser.enabled}<span class="{$ncmBadge}warning">Disabled</span>{/if}
                                     </td>
                                     <td>{$ncmUser.display_name|escape}</td>
-                                    <td class="ncm-nowrap">{$ncmUser.disk_usage} MB{if $ncmUser.disk_limit} of {$ncmUser.disk_limit} MB{/if}</td>
+                                    <td class="ncm-nowrap">{if $ncmUser.disk_limit}{$ncmUser.disk_usage} MB of {$ncmUser.disk_limit} MB{else}<span class="text-muted">Domain's limit</span>{/if}</td>
                                     <td class="ncm-right ncm-nowrap">
                                         {if $ncmWebmailLogin && $ncmUser.enabled}
                                             <a href="{$ncmBaseUrl}&amp;customAction=webmail&amp;mailbox={$ncmUser.username|escape:'url'}" target="_blank" rel="noopener" class="btn btn-default btn-sm">Webmail</a>

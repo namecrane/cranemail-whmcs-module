@@ -31,7 +31,6 @@
                         <a href="clientarea.php?action=productdetails&amp;id={$ncmServiceId}&amp;dosinglesignon=1" target="_blank" class="btn btn-default">Login to MXFilter</a>
                     {/if}
                 </p>
-                <p class="text-muted ncm-muted">Mailboxes sign in at <a href="{$ncmLoginUrl|escape}" target="_blank" rel="noopener">{$ncmLoginHost|escape}</a> with their full email address and password.</p>
             {else}
                 <p>This domain is suspended, so its mail is stopped. Contact us to have it turned back on.</p>
             {/if}

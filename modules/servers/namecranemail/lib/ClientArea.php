@@ -99,7 +99,6 @@ class ClientArea
 
         return array(
             'ncmLoginUrl' => 'https://' . $loginHost,
-            'ncmLoginHost' => $loginHost,
             'ncmUsage' => array(
                 array('label' => 'Storage', 'used' => round($domain['disk_usage'] / 1024, 2), 'limit' => $domain['disk_limit'], 'unit' => 'GB'),
                 array('label' => 'Mailboxes', 'used' => $domain['user_count'], 'limit' => $domain['user_limit'], 'unit' => ''),
