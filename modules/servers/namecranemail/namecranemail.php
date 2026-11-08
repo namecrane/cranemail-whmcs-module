@@ -1,356 +1,264 @@
 <?php
 
+/**
+ * NameCrane Mail for WHMCS: sells CraneMail email domains from your NameCrane reseller plan.
+ *
+ * Set up a server with your NameCrane API key in its Access Hash field. Leave Hostname empty
+ * (it defaults to namecrane.com). Fill in Username only if the key covers more than one
+ * reseller plan: put the plan's service ID there.
+ *
+ * Runs on PHP 7.2 and up, so WHMCS 7 installs can use it too.
+ */
+
 use WHMCS\Database\Capsule;
-use GuzzleHttp\Client;
+use WHMCS\Module\Server\Namecranemail\ApiClient;
+use WHMCS\Module\Server\Namecranemail\ApiException;
+use WHMCS\Module\Server\Namecranemail\ClientArea;
+use WHMCS\Module\Server\Namecranemail\Package;
+use WHMCS\Module\Server\Namecranemail\View;
 
-function namecranemail_MetaData() {
-
-  return [
-    'DisplayName'     => 'Namecrane Email',
-    'APIVersion'      => '1.1',
-    'RequiresServer'  => true
-  ];
-
+if (! defined('WHMCS')) {
+    die('This file cannot be accessed directly');
 }
 
-function namecranemail_ConfigOptions() {
-
-  return [
-    'Disk Space (GB)' => [ 
-      'Type'          => 'text',
-      'Size'          => '25',
-      'Default'       => 1,
-      'SimpleMode'    => true
-    ],
-    'Max Email Users' => [ 
-      'Type'        => 'text',
-      'Size'        => '8',
-      'Description' => '0 = Unlimited',
-      'Default'     => 0,      
-      'SimpleMode'  => true
-    ],
-    'SpamExperts' => [ 
-      'Type'    => 'dropdown',
-      'Options' => [
-        '0' => 'Disabled',
-        '1' => 'Enabled'
-      ],
-      'SimpleMode' => true
-    ],
-    'Max User Aliases' => [ 
-      'Type'        => 'text',
-      'Size'        => '8',
-      'Description' => '0 = Unlimited',
-      'Default'     => 0,      
-      'SimpleMode'  => true
-    ],
-    'SpamExperts Access' => [ 
-      'Type'    => 'dropdown',
-      'Options' => [
-        'primary' => 'Primary Administrator Only',
-        'all'     => 'All Domain Administrators'
-      ],
-      'SimpleMode' => true
-    ],
-    'Max Domain Aliases' => [ 
-      'Type'        => 'text',
-      'Size'        => '8',
-      'Description' => '0 = Unlimited',
-      'Default'     => 0,
-      'SimpleMode'  => true,
-    ],
-    'Email Archiving (Years)' => [
-      'Type'    => 'dropdown',
-      'Options' => [
-        '0' => 'Disabled',
-        '1' => '1 Year',
-        '2' => '2 Years',
-        '3' => '3 Years',
-        '4' => '4 Years',
-        '5' => '5 Years',
-        '6' => '6 Years',
-        '7' => '7 Years',
-        '8' => '8 Years',
-        '9' => '9 Years',
-        '10' => '10 Years',
-        '15' => '15 Years',
-        '20' => '20 Years'
-      ],
-      'SimpleMode' => true,
-    ],    
-    'Email Archiving Direction' => [
-      'Type'    => 'dropdown',
-      'Options' => [
-        'in'    => 'Incoming',
-        'out'   => 'Outgoing',
-        'inout' => 'Both'
-      ],
-      'SimpleMode' => true,
-    ],
-    'File Storage' => [ 
-      'Type'    => 'dropdown',
-      'Options' => [
-        '0' => 'Disabled',
-        '1' => 'Enabled'
-      ],
-      'SimpleMode' => true
-    ],
-    'Office Suite' => [ 
-      'Type'    => 'dropdown',
-      'Options' => [
-        '0' => 'Disabled',
-        '1' => 'Enabled'
-      ],
-      'SimpleMode' => true
-    ]
-  ];
-
+if (! defined('NAMECRANEMAIL_VERSION')) {
+    define('NAMECRANEMAIL_VERSION', '2.0.0');
 }
 
-function namecranemail_CreateAccount($vars) {
+require_once __DIR__ . '/lib/ApiException.php';
+require_once __DIR__ . '/lib/ApiClient.php';
+require_once __DIR__ . '/lib/Package.php';
+require_once __DIR__ . '/lib/View.php';
+require_once __DIR__ . '/lib/ClientArea.php';
 
-  $post = [
-    'domain'                  => $vars['domain'],
-    'disklimit'               => (isset($vars['configoptions']['disklimit']) ? $vars['configoptions']['disklimit'] : $vars['configoption1']),
-    'userlimit'               => (isset($vars['configoptions']['userlimit']) ? $vars['configoptions']['userlimit'] : $vars['configoption2']),
-    'useraliaslimit'          => (isset($vars['configoptions']['useraliaslimit']) ? $vars['configoptions']['useraliaslimit'] : $vars['configoption4']),
-    'spamexperts'             => (isset($vars['configoptions']['spamexperts']) ? $vars['configoptions']['spamexperts'] : $vars['configoption3']),
-    'spamexperts_adminaccess' => $vars['configoption5'],
-    'domainaliaslimit'        => (isset($vars['configoptions']['domainaliaslimit']) ? $vars['configoptions']['domainaliaslimit'] : $vars['configoption6']),
-    'archive_years'           => (isset($vars['configoptions']['archive_years']) ? $vars['configoptions']['archive_years'] : $vars['configoption7']),
-    'archive_direction'       => (isset($vars['configoptions']['archive_direction']) ? $vars['configoptions']['archive_direction'] : $vars['configoption8']),
-    'filestorage'             => (isset($vars['configoptions']['filestorage']) ? $vars['configoptions']['filestorage'] : $vars['configoption9']),
-    'office'                  => (isset($vars['configoptions']['office']) ? $vars['configoptions']['office'] : $vars['configoption10']),
-  ];
-
-  $return = namecranemail_execute('POST', 'domain/create', $vars, $post);
-  
-  if(!$return['status']) {
-    return $return['message'];
-  }
-  
-  localAPI('UpdateClientProduct', [
-    'serviceid'         => $vars['serviceid'],
-    'serviceusername'   => $return['data']['username'],
-    'servicepassword'   => $return['data']['password'] 
-  ]);
-
-  return 'success';
-
+function namecranemail_MetaData()
+{
+    return array(
+        'DisplayName' => 'NameCrane Mail',
+        'APIVersion' => '1.1',
+        'RequiresServer' => true,
+        'ServiceSingleSignOnLabel' => 'Login to MXFilter',
+        'AdminSingleSignOnLabel' => 'Login to MXFilter',
+    );
 }
 
-function namecranemail_TerminateAccount($vars) {
-
-  $post = [
-    'domain'  => $vars['domain'],
-  ];
-
-  $return = namecranemail_execute('POST', 'domain/delete', $vars, $post);
-  
-  if(!$return['status']) {
-    return $return['message'];
-  }
-
-  return 'success';
-
+function namecranemail_ConfigOptions()
+{
+    return Package::configOptions();
 }
 
-function namecranemail_SuspendAccount($vars) {
-
-  $post = [
-    'domain'  => $vars['domain'],
-  ];
-
-  $return = namecranemail_execute('POST', 'domain/suspend', $vars, $post);
-  
-  if(!$return['status']) {
-    return $return['message'];
-  }
-
-  return 'success';
-
-}
-
-function namecranemail_UnsuspendAccount($vars) {
-
-  $post = [
-    'domain'  => $vars['domain'],
-  ];
-
-  $return = namecranemail_execute('POST', 'domain/unsuspend', $vars, $post);
-  
-  if(!$return['status']) {
-    return $return['message'];
-  }
-
-  return 'success';
-
-}
-
-function namecranemail_ChangePackage($vars) {
-
-  $post = [
-    'domain'                  => $vars['domain'],
-    'disklimit'               => (isset($vars['configoptions']['disklimit']) ? $vars['configoptions']['disklimit'] : $vars['configoption1']),
-    'userlimit'               => (isset($vars['configoptions']['userlimit']) ? $vars['configoptions']['userlimit'] : $vars['configoption2']),
-    'useraliaslimit'          => (isset($vars['configoptions']['useraliaslimit']) ? $vars['configoptions']['useraliaslimit'] : $vars['configoption4']),
-    'spamexperts'             => (isset($vars['configoptions']['spamexperts']) ? $vars['configoptions']['spamexperts'] : $vars['configoption3']),
-    'spamexperts_adminaccess' => $vars['configoption5'],
-    'domainaliaslimit'        => (isset($vars['configoptions']['domainaliaslimit']) ? $vars['configoptions']['domainaliaslimit'] : $vars['configoption6']),
-    'archive_years'           => (isset($vars['configoptions']['archive_years']) ? $vars['configoptions']['archive_years'] : $vars['configoption7']),
-    'archive_direction'       => (isset($vars['configoptions']['archive_direction']) ? $vars['configoptions']['archive_direction'] : $vars['configoption8']),
-    'filestorage'             => (isset($vars['configoptions']['filestorage']) ? $vars['configoptions']['filestorage'] : $vars['configoption9']),
-    'office'                  => (isset($vars['configoptions']['office']) ? $vars['configoptions']['office'] : $vars['configoption10'])
-  ];
-
-  $return = namecranemail_execute('POST', 'domain/modify', $vars, $post);
-  
-  if(!$return['status']) {
-    return $return['message'];
-  }
-  
-  return 'success';
-
-}
-
-function namecranemail_AdminServicesTabFields($vars) {
-
-  $post = [
-    'domain' => $vars['domain']
-  ];
-
-  $stats = namecranemail_execute('POST', 'domain/info', $vars, $post);
-
-  if(!$stats['status']) {
-    $html = 'Couldn\'t get domain statistics.';
-  } else {
-
-    $smarty = new Smarty();
-    $smarty->assign('info', $stats['data']['data']);
-
-    $html = $smarty->fetch(__DIR__ . '/templates/adminoutput.tpl');
-
-  }
-
-  return [
-    'Statistics' => $html
-  ];
-  
-}
-
-function namecranemail_ClientArea($vars) {
-
-  $post = [
-    'domain' => $vars['domain']
-  ];
-
-  $stats = namecranemail_execute('POST', 'domain/info', $vars, $post);
-
-  if(!$stats['status']) {
-    $error = 'Couldn\'t get domain statistics.';
-  }
-  
-  return [
-    'templatefile' => 'templates/clientarea',
-    'vars' => [
-      'vars'      => $vars,
-      'error'     => $error,
-      'info'      => $stats['data']['data'],
-      'dns'       => $stats['data']['data']['dns'],
-      'dkim'      => $stats['data']['data']['dkim'],
-      'verified'  => $stats['data']['data']['verified']
-    ]
-  ];
-
-}
-
-function namecranemail_ClientAreaCustomButtonArray(array $vars) {
-
-  $return = [];
-
-  if($vars['configoptions']['spamexperts'] || $vars['configoption3']) {
-    $return['Login to MXFilter'] = 'ssoMXFilter';
-  }
-
-  return $return;
-
-}
-
-function namecranemail_AdminCustomButtonArray(array $vars) {
-
-  $return = [];
-
-  if($vars['configoptions']['spamexperts'] || $vars['configoption3']) {
-    $return['Login to MXFilter'] = 'adminMXFilterSSO';
-  }
-
-  return $return;
-
-}
-
-function namecranemail_getMXFilterSSO(array $vars) {
-
-  $post = [
-    'domain' => $vars['domain']
-  ];
-
-  return namecranemail_execute('POST', 'mxfilter/login', $vars, $post);
-
-}
-
-function namecranemail_adminMXFilterSSO(array $vars) {
-
-  $sso = namecranemail_getMXFilterSSO($vars);
-
-  if(!$sso['status']) {
-    return 'Couldn\'t get authentication token.';
-  }
-
-  return 'window|' . $sso['data']['url'];
-
-}
-
-function namecranemail_ssoMXFilter(array $vars) {
-
-  $sso = namecranemail_getMXFilterSSO($vars);
-
-  if(!$sso['status']) {
-    return 'Couldn\'t get authentication token.';
-  }
-
-  header('Location: ' . $sso['data']['url']);
-
-  exit();
-
-}
-
-function namecranemail_execute($method, $action, $vars, $post = []) {
-
-  $guzzle = new Client();
-
-  try {
-
-    $return = $guzzle->request($method, 'https://namecrane.com/index.php?m=cranemail&action=api/' . $action, [
-      'headers'     => [ 'X-API-KEY' => $vars['serveraccesshash'] ],
-      'form_params' => ($method == 'POST' ? $post : [])
-    ])->getBody();
-
-    $return = json_decode($return, true);
-
-    if(json_last_error() !== JSON_ERROR_NONE) {
-      return ['status' => false, 'message' => 'Invalid JSON response from Namecrane. Ticket support (and blame Fran)' ];
+/**
+ * The server's "Test Connection": the key works, and it's clear which reseller plan it uses.
+ */
+function namecranemail_TestConnection(array $params)
+{
+    try {
+        $services = ApiClient::fromParams($params)->get('cranemail/services');
+    } catch (ApiException $e) {
+        return array('success' => false, 'error' => namecranemail_explain($e));
     }
 
-    return [ 'status' => $return['status'], 'message' => $return['message'], 'data' => $return ];
+    $wanted = Package::serviceId($params);
 
-  } catch (\GuzzleHttp\Exception\RequestException $e) {    
-    logModuleCall('namecranemail', $action, $post, $e);
-    return [ 'status' => false, 'message' => $e->getMessage() ];
-  } catch(\GuzzleHttp\Exception\GuzzleException $e) {
-    logModuleCall('namecranemail', $action, $post, $e);
-    return [ 'status' => false, 'message' => $e->getMessage() ];
-  }
+    if ($services === array()) {
+        return array('success' => false, 'error' => 'This API key can\'t reach any NameCrane Mail reseller plan. Check the key\'s access in your NameCrane account.');
+    }
 
+    if ($wanted !== null) {
+        foreach ($services as $service) {
+            if ((int) $service['id'] === $wanted) {
+                return array('success' => true, 'error' => '');
+            }
+        }
+
+        return array('success' => false, 'error' => 'This API key can\'t reach service #' . $wanted . '. It can reach: ' . namecranemail_describeServices($services) . '.');
+    }
+
+    if (count($services) > 1) {
+        return array('success' => false, 'error' => 'This API key covers more than one reseller plan (' . namecranemail_describeServices($services) . '). Put the service ID of the one this server is for in the Username field.');
+    }
+
+    return array('success' => true, 'error' => '');
 }
 
-?>
+function namecranemail_CreateAccount(array $params)
+{
+    $domain = strtolower(trim((string) $params['domain']));
+
+    if ($domain === '') {
+        return 'This service has no domain. Set the email domain on the service first.';
+    }
+
+    $request = array('domain' => $domain) + Package::settings($params);
+
+    if (($serviceId = Package::serviceId($params)) !== null) {
+        $request['service_id'] = $serviceId;
+    }
+
+    try {
+        $created = ApiClient::fromParams($params)->post('cranemail/domains', $request);
+    } catch (ApiException $e) {
+        return namecranemail_explain($e);
+    }
+
+    if (! empty($created['admin']['password'])) {
+        localAPI('UpdateClientProduct', array(
+            'serviceid' => $params['serviceid'],
+            'serviceusername' => $created['admin']['username'],
+            'servicepassword' => $created['admin']['password'],
+        ));
+    }
+
+    return 'success';
+}
+
+function namecranemail_SuspendAccount(array $params)
+{
+    try {
+        ApiClient::fromParams($params)->post('cranemail/domains/' . ApiClient::segment($params['domain']) . '/suspend');
+    } catch (ApiException $e) {
+        return namecranemail_explain($e);
+    }
+
+    return 'success';
+}
+
+function namecranemail_UnsuspendAccount(array $params)
+{
+    try {
+        ApiClient::fromParams($params)->post('cranemail/domains/' . ApiClient::segment($params['domain']) . '/unsuspend');
+    } catch (ApiException $e) {
+        // Unsuspending a domain that isn't suspended leaves it as it should be.
+        return $e->status() === 400 && $e->getMessage() === 'This domain is not suspended.' ? 'success' : namecranemail_explain($e);
+    }
+
+    return 'success';
+}
+
+function namecranemail_TerminateAccount(array $params)
+{
+    try {
+        ApiClient::fromParams($params)->delete('cranemail/domains/' . ApiClient::segment($params['domain']));
+    } catch (ApiException $e) {
+        // Already gone is what terminating wants.
+        return $e->status() === 404 ? 'success' : namecranemail_explain($e);
+    }
+
+    return 'success';
+}
+
+function namecranemail_ChangePackage(array $params)
+{
+    try {
+        ApiClient::fromParams($params)->put('cranemail/domains/' . ApiClient::segment($params['domain']) . '/settings', Package::settings($params));
+    } catch (ApiException $e) {
+        return namecranemail_explain($e);
+    }
+
+    return 'success';
+}
+
+/**
+ * Disk usage and limits for every domain on this server, in MB as WHMCS keeps them.
+ */
+function namecranemail_UsageUpdate(array $params)
+{
+    try {
+        $services = ApiClient::fromParams($params)->get('cranemail/services');
+    } catch (ApiException $e) {
+        return $e->getMessage();
+    }
+
+    $wanted = Package::serviceId($params);
+    $now = date('Y-m-d H:i:s');
+
+    foreach ($services as $service) {
+        if ($wanted !== null && (int) $service['id'] !== $wanted) {
+            continue;
+        }
+
+        foreach ($service['domains'] as $domain) {
+            Capsule::table('tblhosting')
+                ->where('server', $params['serverid'])
+                ->where('domain', $domain['domain'])
+                ->update(array(
+                    'diskusage' => (int) round($domain['disk_usage']),
+                    'disklimit' => (int) $domain['disk_limit'] * 1024,
+                    'lastupdate' => $now,
+                ));
+        }
+    }
+
+    return 'success';
+}
+
+/**
+ * The MXFilter panel, for the client (from their product page) and for staff (from the
+ * service in the admin area), when the package allows it.
+ */
+function namecranemail_ServiceSingleSignOn(array $params)
+{
+    if (! Package::mxfilterLoginAllowed($params)) {
+        return array('success' => false, 'errorMsg' => 'Signing in to MXFilter without a password is turned off for this product.');
+    }
+
+    try {
+        $login = ApiClient::fromParams($params)->post('cranemail/domains/' . ApiClient::segment($params['domain']) . '/mxfilter/login');
+    } catch (ApiException $e) {
+        return array('success' => false, 'errorMsg' => $e->getMessage());
+    }
+
+    return array('success' => true, 'redirectTo' => $login['url']);
+}
+
+function namecranemail_AdminServicesTabFields(array $params)
+{
+    if (trim((string) $params['domain']) === '') {
+        return array();
+    }
+
+    try {
+        $domain = ApiClient::fromParams($params)->get('cranemail/domains/' . ApiClient::segment($params['domain']));
+    } catch (ApiException $e) {
+        return array('NameCrane Mail' => '<div class="alert alert-warning" style="margin:0">' . htmlspecialchars($e->getMessage()) . '</div>');
+    }
+
+    return array('NameCrane Mail' => View::render('admin', array('domain' => $domain)));
+}
+
+function namecranemail_ClientArea(array $params)
+{
+    $page = new ClientArea($params);
+
+    return $page->handle();
+}
+
+/**
+ * The API's refusal, with what to do about it when the server setup is the cause.
+ *
+ * @return string
+ */
+function namecranemail_explain(ApiException $e)
+{
+    $body = $e->body();
+
+    if ($e->status() === 422 && ! empty($body['services'])) {
+        return 'This API key covers more than one reseller plan (' . namecranemail_describeServices($body['services']) . '). Put the service ID of the one this server is for in the server\'s Username field.';
+    }
+
+    if ($e->status() === 401) {
+        return 'NameCrane didn\'t accept the API key: ' . $e->getMessage() . ' Check the server\'s Access Hash field.';
+    }
+
+    return $e->getMessage();
+}
+
+/**
+ * @return string
+ */
+function namecranemail_describeServices(array $services)
+{
+    return implode(', ', array_map(function ($service) {
+        return '#' . $service['id'] . ' ' . $service['name'];
+    }, $services));
+}

@@ -1,0 +1,60 @@
+/* NameCrane Mail client area. Scoped to .ncm; .ncm-six, .ncm-twenty-one and .ncm-lagom2
+   carry the few per-theme differences. */
+.ncm .ncm-tabs { margin-bottom: 20px; }
+.ncm .ncm-card { margin-bottom: 20px; }
+.ncm .ncm-card > .table,
+.ncm .ncm-card > .ncm-scroll > .table { margin-bottom: 0; }
+.ncm .ncm-card > .table td:first-child,
+.ncm .ncm-card > .table th:first-child,
+.ncm .ncm-card > .ncm-scroll > .table td:first-child,
+.ncm .ncm-card > .ncm-scroll > .table th:first-child { padding-left: 15px; }
+.ncm .ncm-card > .table td:last-child,
+.ncm .ncm-card > .table th:last-child,
+.ncm .ncm-card > .ncm-scroll > .table td:last-child,
+.ncm .ncm-card > .ncm-scroll > .table th:last-child { padding-right: 15px; }
+.ncm .ncm-scroll { overflow-x: auto; }
+.ncm .panel-body > .table:last-child,
+.ncm .card-body > .table:last-child { margin-bottom: 0; }
+.ncm .ncm-right { text-align: right; }
+.ncm .ncm-nowrap { white-space: nowrap; }
+.ncm .ncm-muted { margin: 0; font-size: 0.9em; }
+.ncm .ncm-help { margin: 5px 0 0; font-size: 0.85em; opacity: 0.75; }
+.ncm .ncm-intro { margin: 0 0 15px; }
+.ncm .ncm-count { margin-left: 6px; font-size: 0.8em; font-weight: normal; opacity: 0.7; }
+.ncm .ncm-status { margin-left: 6px; font-size: 0.7em; vertical-align: middle; }
+.ncm .ncm-actions { margin: 0 0 10px; }
+.ncm .ncm-actions .btn { margin: 0 6px 6px 0; }
+.ncm .ncm-copy { user-select: all; }
+.ncm .ncm-wrap { word-break: break-all; }
+.ncm .ncm-mono { font-family: SFMono-Regular, Menlo, Consolas, monospace; }
+.ncm .ncm-icon { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; }
+.ncm [data-ncm-toggle][aria-pressed="true"] { opacity: 0.65; }
+.ncm .ncm-records td { vertical-align: top; }
+.ncm .ncm-list td { vertical-align: middle; }
+.ncm .ncm-targets div { white-space: nowrap; }
+.ncm .ncm-inline { display: inline; margin: 0; }
+.ncm .ncm-list .btn + .btn,
+.ncm .ncm-list .btn + .ncm-inline,
+.ncm .ncm-list .ncm-inline + .btn { margin-left: 4px; }
+.ncm .ncm-address { display: flex; align-items: center; }
+.ncm .ncm-address .form-control { flex: 1 1 auto; min-width: 0; }
+.ncm .ncm-address span { padding-left: 8px; white-space: nowrap; opacity: 0.8; }
+.ncm .ncm-check { display: block; margin: 0 0 6px; font-weight: normal; cursor: pointer; }
+.ncm .ncm-check input { margin: 0 6px 0 0; vertical-align: middle; }
+.ncm .ncm-form-actions { margin-top: 15px; }
+.ncm .ncm-form-actions .btn { margin-right: 6px; }
+.ncm .ncm-row-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.ncm .ncm-row-form .form-control { flex: 1 1 220px; width: auto; }
+.ncm .label,
+.ncm .badge { margin-left: 4px; font-weight: 600; }
+
+/* six: Bootstrap 3 panel titles are small; match the page's other headings. */
+.ncm-six .panel-title { font-size: 16px; }
+
+/* twenty-one: card titles carry a bottom margin meant for card bodies. */
+.ncm-twenty-one .card-title { margin: 0; font-size: 1.05rem; }
+.ncm-twenty-one .ncm-tabs .nav-item.active > .nav-link { font-weight: 600; }
+
+/* Lagom 2: its panels already space themselves; the headings are larger. */
+.ncm-lagom2 .ncm-card { margin-bottom: 24px; }
+.ncm-lagom2 .panel-title { font-size: 16px; font-weight: 600; }
