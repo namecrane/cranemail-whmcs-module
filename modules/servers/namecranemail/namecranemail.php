@@ -22,7 +22,7 @@ if (! defined('WHMCS')) {
 }
 
 if (! defined('NAMECRANEMAIL_VERSION')) {
-    define('NAMECRANEMAIL_VERSION', '2.0.0');
+    define('NAMECRANEMAIL_VERSION', '2.1.0');
 }
 
 require_once __DIR__ . '/lib/ApiException.php';

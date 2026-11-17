@@ -59,9 +59,19 @@ everywhere, including in your NameCrane portal.
 
 ## Order-time options (à la carte)
 
-Configurable options override the product's settings. Name each option with the key below,
-a pipe, and your own label, e.g. `userlimit|Email Accounts`. If you use them, set the matching
-product options to 0 to avoid confusion.
+Configurable options set a service's settings when it's ordered. Name each option with the
+key below, a pipe, and your own label, e.g. `userlimit|Email Accounts`.
+
+The four limits come two ways:
+
+- **Set the limit:** `userlimit` replaces the product's limit. With 1 mailbox on the product,
+  `userlimit` at 3 gives 3 mailboxes.
+- **Add to the plan:** `extra_userlimit` adds to it. The same product with `extra_userlimit`
+  at 3 gives 4 mailboxes, e.g. `extra_userlimit|Additional mailboxes`.
+
+A quantity left at 0 keeps the product's own limit, so set the product options to what a
+client gets when they choose none. 0 on the product means unlimited, and extras on an
+unlimited limit leave it unlimited.
 
 | Option name | Type | Description |
 | ----------- | ---- | ----------- |
@@ -69,6 +79,10 @@ product options to 0 to avoid confusion.
 | `userlimit` | quantity | Mailboxes |
 | `useraliaslimit` | quantity | Aliases |
 | `domainaliaslimit` | quantity | Domain aliases |
+| `extra_disklimit` | quantity | Storage (GB) added to the plan's |
+| `extra_userlimit` | quantity | Mailboxes added to the plan's |
+| `extra_useraliaslimit` | quantity | Aliases added to the plan's |
+| `extra_domainaliaslimit` | quantity | Domain aliases added to the plan's |
 | `spamexperts` | yesno | MXFilter spam filtering |
 | `archive_years` | dropdown | Archiving years: 0 (off), 1 to 10, 15 or 20 |
 | `archive_direction` | dropdown | `in`, `out` or `inout` |

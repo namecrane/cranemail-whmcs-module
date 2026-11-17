@@ -4,7 +4,8 @@ namespace WHMCS\Module\Server\Namecranemail;
 
 /**
  * A service's package settings: the product's module options, overridden by configurable
- * options named after them (see the README), in the shape the API takes.
+ * options named after them or, for the limits, added to by extra_ ones (see the README), in
+ * the shape the API takes.
  *
  * The first ten options keep the positions the 1.x module gave them (WHMCS stores them by
  * position), so updating the module leaves existing products as they were.
@@ -74,12 +75,12 @@ class Package
         $access = (string) self::value($params, 'spamexperts_adminaccess', 5);
 
         return array(
-            'disk_limit' => max(0, (int) self::value($params, 'disklimit', 1)),
-            'user_limit' => max(0, (int) self::value($params, 'userlimit', 2)),
+            'disk_limit' => self::limit($params, 'disklimit', 1),
+            'user_limit' => self::limit($params, 'userlimit', 2),
             'mxfilter_enabled' => (bool) self::value($params, 'spamexperts', 3),
-            'user_alias_limit' => max(0, (int) self::value($params, 'useraliaslimit', 4)),
+            'user_alias_limit' => self::limit($params, 'useraliaslimit', 4),
             'mxfilter_admin_access' => in_array($access, array('primary', 'all'), true) ? $access : 'primary',
-            'domain_alias_limit' => max(0, (int) self::value($params, 'domainaliaslimit', 6)),
+            'domain_alias_limit' => self::limit($params, 'domainaliaslimit', 6),
             'archive_years' => min(20, max(0, $years)),
             'archive_direction' => $years > 0 ? (in_array($direction, array('in', 'out', 'inout'), true) ? $direction : 'inout') : 'disabled',
             'file_storage' => (bool) self::value($params, 'filestorage', 9),
@@ -145,6 +146,35 @@ class Package
         }
 
         return self::option($params, $index);
+    }
+
+    /**
+     * A limit: a quantity configurable option named $name when the order chose more than 0,
+     * else module option $index, plus any extra_$name quantity on top. 0 means unlimited to
+     * the API, so a quantity left at 0 keeps the product's own limit instead of lifting it,
+     * and extras on an unlimited limit leave it unlimited.
+     *
+     * @param array $params
+     * @param string $name
+     * @param int $index
+     * @return int
+     */
+    private static function limit(array $params, $name, $index)
+    {
+        $quantity = self::quantity($params, $name);
+        $limit = $quantity > 0 ? $quantity : max(0, (int) self::option($params, $index));
+
+        return $limit > 0 ? $limit + self::quantity($params, 'extra_' . $name) : 0;
+    }
+
+    /**
+     * @param array $params
+     * @param string $name
+     * @return int
+     */
+    private static function quantity(array $params, $name)
+    {
+        return isset($params['configoptions'][$name]) ? max(0, (int) $params['configoptions'][$name]) : 0;
     }
 
     /**
