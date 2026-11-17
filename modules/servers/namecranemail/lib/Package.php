@@ -4,7 +4,8 @@ namespace WHMCS\Module\Server\Namecranemail;
 
 /**
  * A service's package settings: the product's module options, overridden by configurable
- * options named after them (see the README), in the shape the API takes.
+ * options named after them or, for the limits, added to by extra_ ones (see the README), in
+ * the shape the API takes.
  *
  * The first ten options keep the positions the 1.x module gave them (WHMCS stores them by
  * position), so updating the module leaves existing products as they were.
@@ -149,8 +150,9 @@ class Package
 
     /**
      * A limit: a quantity configurable option named $name when the order chose more than 0,
-     * else module option $index. 0 means unlimited to the API, so a quantity left at 0 keeps
-     * the product's own limit instead of lifting it.
+     * else module option $index, plus any extra_$name quantity on top. 0 means unlimited to
+     * the API, so a quantity left at 0 keeps the product's own limit instead of lifting it,
+     * and extras on an unlimited limit leave it unlimited.
      *
      * @param array $params
      * @param string $name
@@ -159,9 +161,20 @@ class Package
      */
     private static function limit(array $params, $name, $index)
     {
-        $quantity = isset($params['configoptions'][$name]) ? (int) $params['configoptions'][$name] : 0;
+        $quantity = self::quantity($params, $name);
+        $limit = $quantity > 0 ? $quantity : max(0, (int) self::option($params, $index));
 
-        return $quantity > 0 ? $quantity : max(0, (int) self::option($params, $index));
+        return $limit > 0 ? $limit + self::quantity($params, 'extra_' . $name) : 0;
+    }
+
+    /**
+     * @param array $params
+     * @param string $name
+     * @return int
+     */
+    private static function quantity(array $params, $name)
+    {
+        return isset($params['configoptions'][$name]) ? max(0, (int) $params['configoptions'][$name]) : 0;
     }
 
     /**
