@@ -60,8 +60,12 @@ everywhere, including in your NameCrane portal.
 ## Order-time options (à la carte)
 
 Configurable options override the product's settings. Name each option with the key below,
-a pipe, and your own label, e.g. `userlimit|Email Accounts`. If you use them, set the matching
-product options to 0 to avoid confusion.
+a pipe, and your own label, e.g. `userlimit|Email Accounts`.
+
+A quantity replaces the product's limit rather than adding to it: with 1 mailbox on the
+product, `userlimit` at 3 gives 3 mailboxes. A quantity left at 0 keeps the product's own
+limit, so set the product options to what a client gets when they choose none (0 there still
+means unlimited).
 
 | Option name | Type | Description |
 | ----------- | ---- | ----------- |
